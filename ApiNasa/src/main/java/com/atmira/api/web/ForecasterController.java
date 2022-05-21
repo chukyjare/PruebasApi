@@ -27,7 +27,7 @@ public class ForecasterController {
 	
 	@ResponseStatus(value = HttpStatus.OK)
 	@GetMapping(UrlConstants.POTENTIAL_DANGER_ASTEROIDS)
-	public PotentialDangerResponse getPotentialDanger(@PathParam(value = "days") int days) {
+	public PotentialDangerResponse getPotentialDanger(@PathParam(value = "days") byte days) {
 		log.info("Consulting API NASA...");
 		//mockeo respuesta
 		return new PotentialDangerResponse("DRT ZEUS ", new BigDecimal(15+days), "80km/h", "20/10/2023", "Tierra");
