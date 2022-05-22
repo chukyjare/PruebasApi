@@ -17,4 +17,7 @@ public class GlobalConstants {
 	public static final String KILOMETERS = "kilometers";
 	public static final String ESTIMATED_DIAMETER_MIN = "estimated_diameter_min";
 	public static final String ESTIMATED_DIAMETER_MAX = "estimated_diameter_max";
+	public static final String PATTERN_REGGEX = "^[0-7]{1}$";
+	public static final String INVALID_NUMBER_DAYS_MESSAGE = "The days entry is not valid";
+	public static final String INVALID_NUMBER_DAYS_DESCRIPTION = "The days entry is not valid, must be a number between 1 and 7";
 }
