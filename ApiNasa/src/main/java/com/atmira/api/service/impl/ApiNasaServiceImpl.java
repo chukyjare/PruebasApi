@@ -2,6 +2,8 @@ package com.atmira.api.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
@@ -61,7 +63,7 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 		for (int i = 0; i < days; i++) {
 			JSONArray date = (JSONArray) nearEarthObjects.get(dates[i]);
 			for (int j = 0; j < date.size(); j++) {
-				JSONObject objAsteroid = (JSONObject) date.get(i);
+				JSONObject objAsteroid = (JSONObject) date.get(j);
 				boolean isDangerous = (boolean) objAsteroid.get("is_potentially_hazardous_asteroid");
 				if (isDangerous) {
 					String name = objAsteroid.getString("name");
@@ -75,7 +77,18 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 				}
 			}
 		}
-		return listPotentialDanger;
+		
+		return getTopListPotentialDanger(listPotentialDanger);
+	}
+
+	private List<PotentialDangerResponse> getTopListPotentialDanger(List<PotentialDangerResponse> listPotentialDanger) {
+		int topNumber = 3;
+		Collections.sort(listPotentialDanger, (o1, o2) -> o2.getDiameter().compareTo(o1.getDiameter()));
+		List<PotentialDangerResponse> topListPotentialDanger = new ArrayList<PotentialDangerResponse>();
+		for (int i = 0; i < topNumber; i++) {
+			topListPotentialDanger.add(listPotentialDanger.get(i));
+		}
+		return topListPotentialDanger;
 	}
 
 	private String getPlanet(JSONObject objAsteroid) {

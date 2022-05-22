@@ -29,8 +29,6 @@ public class ForecasterController {
 	@GetMapping(UrlConstants.POTENTIAL_DANGER_ASTEROIDS)
 	public List<PotentialDangerResponse> getPotentialDanger(@PathParam(value = "days") byte days) {
 		log.info("Consulting API NASA...");
-		List<PotentialDangerResponse> response = apiNasaService.callApiNasa(days);
-		//mockeo respuesta
-		return response;
+		return apiNasaService.callApiNasa(days);
 	}
 }
