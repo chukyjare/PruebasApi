@@ -1,9 +1,15 @@
 package com.atmira.api.service.impl;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.http.HttpHeaders;
@@ -27,6 +33,8 @@ import reactor.core.publisher.Mono;
 public class ApiNasaServiceImpl implements ApiNasaService {
 
 	private WebClient webClient;
+	
+	private List<String> dates;
 
 	public ApiNasaServiceImpl(WebClient.Builder webClientBuilder) {
 		super();
@@ -41,9 +49,10 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 		HttpHeaders header = new HttpHeaders();
 		MediaType applicationJson = MediaType.APPLICATION_JSON;
 		header.setContentType(applicationJson);
+		this.dates = getDates(days);
 		String responseApi = this.webClient.get()
-				.uri(uriBuilder -> uriBuilder.path("/neo/rest/v1/feed").queryParam("start_date", "2021-12-09")
-						.queryParam("end_date", "2021-12-12")
+				.uri(uriBuilder -> uriBuilder.path("/neo/rest/v1/feed").queryParam("start_date", dates.get(0))
+						.queryParam("end_date", dates.get(dates.size()-1))
 						.queryParam("api_key", "zdUP8ElJv1cehFM0rsZVSQN7uBVxlDnu4diHlLSb").build())
 				.accept(applicationJson)
 				.headers(httpHeadersOnWebClientBeingBuilt -> httpHeadersOnWebClientBeingBuilt.addAll(header)).retrieve()
@@ -59,9 +68,8 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 		List<PotentialDangerResponse> listPotentialDanger = new ArrayList<PotentialDangerResponse>();
 		JSONObject obj = JSONObject.parseObject(responseApi);
 		JSONObject nearEarthObjects = (JSONObject) obj.get("near_earth_objects");
-		String[] dates = { "2021-12-12", "2021-12-11", "2021-12-10", "2021-12-09" };
 		for (int i = 0; i < days; i++) {
-			JSONArray date = (JSONArray) nearEarthObjects.get(dates[i]);
+			JSONArray date = (JSONArray) nearEarthObjects.get(dates.get(i));
 			for (int j = 0; j < date.size(); j++) {
 				JSONObject objAsteroid = (JSONObject) date.get(j);
 				boolean isDangerous = (boolean) objAsteroid.get("is_potentially_hazardous_asteroid");
@@ -79,6 +87,21 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 		}
 		
 		return getTopListPotentialDanger(listPotentialDanger);
+	}
+
+	private List<String> getDates(byte days) {
+		List<String> listDates = new ArrayList<String>();
+		LocalDateTime localDateTimeNow = LocalDateTime.now();
+		LocalDate localDateNow = localDateTimeNow.toLocalDate();
+		String stringDateNow = localDateNow.toString();
+		listDates.add(stringDateNow);
+		for (int i = 1; i < days; i++) {
+			LocalDateTime localDateTime = localDateTimeNow.plusDays(i);
+			LocalDate localDate = localDateTime.toLocalDate();
+			String stringDate = localDate.toString();
+			listDates.add(stringDate);
+		}
+		return listDates;
 	}
 
 	private List<PotentialDangerResponse> getTopListPotentialDanger(List<PotentialDangerResponse> listPotentialDanger) {
