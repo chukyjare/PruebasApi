@@ -28,32 +28,59 @@ import com.atmira.api.util.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+/**
+ * The Class ApiNasaServiceImpl.
+ */
 @Service
+
+/** The Constant log. */
 @Slf4j
 public class ApiNasaServiceImpl implements ApiNasaService {
 
+	/** The web client. */
 	private WebClient webClient;
-	
+
+	/** The base url. */
 	@Value("${env.base-url-endpoint}")
 	private String baseUrl;
-	
+
+	/** The path. */
 	@Value("${env.path-endpoint}")
 	private String path;;
-	
+
+	/** The api key. */
 	@Value("${env.apykey-endpoint}")
 	private String apiKey;
-	
+
+	/** The dates. */
 	private List<String> dates;
-	
+
+	/** The Constant START_DATE_PARAM. */
 	public static final String START_DATE_PARAM = "start_date";
+
+	/** The Constant END_DATE_PARAM. */
 	public static final String END_DATE_PARAM = "end_date";
+
+	/** The Constant APY_KEY_PARAM. */
 	public static final String APY_KEY_PARAM = "api_key";
 
+	/**
+	 * Instantiates a new api nasa service impl.
+	 *
+	 * @param webClientBuilder the web client builder
+	 */
 	public ApiNasaServiceImpl(WebClient.Builder webClientBuilder) {
 		super();
 		this.webClient = webClientBuilder.build();
 	}
 
+	/**
+	 * Call api nasa.
+	 *
+	 * @param days the days
+	 * @return the list
+	 * @throws ForecasterException the forecaster exception
+	 */
 	@Override
 	public List<PotentialDangerResponse> callApiNasa(byte days) throws ForecasterException {
 
@@ -69,21 +96,30 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 			this.dates = DateUtil.getDates(days);
 			String responseApi = this.webClient.get()
 					.uri(uriBuilder -> uriBuilder.path(path).queryParam(START_DATE_PARAM, dates.get(0))
-							.queryParam(END_DATE_PARAM, dates.get(dates.size()-1))
-							.queryParam(APY_KEY_PARAM, apiKey).build())
+							.queryParam(END_DATE_PARAM, dates.get(dates.size() - 1)).queryParam(APY_KEY_PARAM, apiKey)
+							.build())
 					.accept(applicationJson)
-					.headers(httpHeadersOnWebClientBeingBuilt -> httpHeadersOnWebClientBeingBuilt.addAll(header)).retrieve()
+					.headers(httpHeadersOnWebClientBeingBuilt -> httpHeadersOnWebClientBeingBuilt.addAll(header))
+					.retrieve()
 					.onStatus(HttpStatus::isError,
 							response -> response.bodyToMono(String.class)
-							.flatMap(error -> Mono.error(new RuntimeException(error))))
+									.flatMap(error -> Mono.error(new RuntimeException(error))))
 					.bodyToMono(String.class).block();
 			List<PotentialDangerResponse> potentialDangerResponse = getAsteroidsWithPotentialRisk(responseApi, days);
 			return potentialDangerResponse;
 		}
 		log.error(GlobalConstants.INVALID_NUMBER_DAYS_DESCRIPTION);
-		throw new ForecasterException(HttpConstants.BAD_REQUEST_CODE, GlobalConstants.INVALID_NUMBER_DAYS_MESSAGE, GlobalConstants.INVALID_NUMBER_DAYS_DESCRIPTION);
+		throw new ForecasterException(HttpConstants.BAD_REQUEST_CODE, GlobalConstants.INVALID_NUMBER_DAYS_MESSAGE,
+				GlobalConstants.INVALID_NUMBER_DAYS_DESCRIPTION);
 	}
 
+	/**
+	 * Gets the asteroids with potential risk.
+	 *
+	 * @param responseApi the response api
+	 * @param days        the days
+	 * @return the asteroids with potential risk
+	 */
 	private List<PotentialDangerResponse> getAsteroidsWithPotentialRisk(String responseApi, byte days) {
 		List<PotentialDangerResponse> listPotentialDanger = new ArrayList<PotentialDangerResponse>();
 		JSONObject obj = JSONObject.parseObject(responseApi);
@@ -105,15 +141,21 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 				}
 			}
 		}
-		
+
 		return getTopListPotentialDanger(listPotentialDanger);
 	}
 
+	/**
+	 * Gets the top list potential danger.
+	 *
+	 * @param listPotentialDanger the list potential danger
+	 * @return the top list potential danger
+	 */
 	private List<PotentialDangerResponse> getTopListPotentialDanger(List<PotentialDangerResponse> listPotentialDanger) {
 		int topNumber = 0;
-		if (listPotentialDanger.size()>2) {
+		if (listPotentialDanger.size() > 2) {
 			topNumber = 3;
-		}else {
+		} else {
 			topNumber = listPotentialDanger.size();
 		}
 		Collections.sort(listPotentialDanger, (o1, o2) -> o2.getDiameter().compareTo(o1.getDiameter()));
@@ -124,18 +166,36 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 		return topListPotentialDanger;
 	}
 
+	/**
+	 * Gets the planet.
+	 *
+	 * @param objAsteroid the obj asteroid
+	 * @return the planet
+	 */
 	private String getPlanet(JSONObject objAsteroid) {
 		JSONArray objEstimated = (JSONArray) objAsteroid.get(GlobalConstants.CLOSE_APPROACH_DATA);
 		JSONObject objCloseApproachData = (JSONObject) objEstimated.get(0);
 		return objCloseApproachData.getString(GlobalConstants.ORBITING_BODY);
 	}
 
+	/**
+	 * Gets the approad date.
+	 *
+	 * @param objAsteroid the obj asteroid
+	 * @return the approad date
+	 */
 	private String getApproadDate(JSONObject objAsteroid) {
 		JSONArray objEstimated = (JSONArray) objAsteroid.get(GlobalConstants.CLOSE_APPROACH_DATA);
 		JSONObject objCloseApproachData = (JSONObject) objEstimated.get(0);
 		return objCloseApproachData.getString(GlobalConstants.CLOSE_APPROACH_DATE);
 	}
 
+	/**
+	 * Gets the relative velocity per hour.
+	 *
+	 * @param objAsteroid the obj asteroid
+	 * @return the relative velocity per hour
+	 */
 	private String getRelativeVelocityPerHour(JSONObject objAsteroid) {
 		JSONArray objEstimated = (JSONArray) objAsteroid.get(GlobalConstants.CLOSE_APPROACH_DATA);
 		JSONObject objCloseApproachData = (JSONObject) objEstimated.get(0);
@@ -144,6 +204,12 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 
 	}
 
+	/**
+	 * Ge kilometers.
+	 *
+	 * @param objAsteroid the obj asteroid
+	 * @return the diameter
+	 */
 	private Diameter geKilometers(JSONObject objAsteroid) {
 		JSONObject objEstimated = (JSONObject) objAsteroid.get(GlobalConstants.ESTIMATED_DIAMETER);
 		JSONObject objKilometer = (JSONObject) objEstimated.get(GlobalConstants.KILOMETERS);
@@ -151,6 +217,13 @@ public class ApiNasaServiceImpl implements ApiNasaService {
 				objKilometer.getBigDecimal(GlobalConstants.ESTIMATED_DIAMETER_MAX));
 	}
 
+	/**
+	 * Gets the diameter.
+	 *
+	 * @param min the min
+	 * @param max the max
+	 * @return the diameter
+	 */
 	private BigDecimal getDiameter(BigDecimal min, BigDecimal max) {
 		BigDecimal roundValue = min.add(max).divide(new BigDecimal(2));
 		return roundValue;
