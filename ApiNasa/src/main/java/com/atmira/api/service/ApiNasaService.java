@@ -1,8 +1,10 @@
 package com.atmira.api.service;
 
-import com.atmira.api.model.ApiNasaResponse;
+import java.util.List;
+
+import com.atmira.api.model.PotentialDangerResponse;
 
 public interface ApiNasaService {
 
-	public ApiNasaResponse callApiNasa (byte days);
+	public List<PotentialDangerResponse> callApiNasa (byte days);
 }

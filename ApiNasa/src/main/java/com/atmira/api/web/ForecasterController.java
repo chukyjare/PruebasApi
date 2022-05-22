@@ -1,6 +1,6 @@
 package com.atmira.api.web;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 import javax.websocket.server.PathParam;
 
@@ -27,9 +27,10 @@ public class ForecasterController {
 	
 	@ResponseStatus(value = HttpStatus.OK)
 	@GetMapping(UrlConstants.POTENTIAL_DANGER_ASTEROIDS)
-	public PotentialDangerResponse getPotentialDanger(@PathParam(value = "days") byte days) {
+	public List<PotentialDangerResponse> getPotentialDanger(@PathParam(value = "days") byte days) {
 		log.info("Consulting API NASA...");
+		List<PotentialDangerResponse> response = apiNasaService.callApiNasa(days);
 		//mockeo respuesta
-		return new PotentialDangerResponse("DRT ZEUS ", new BigDecimal(15+days), "80km/h", "20/10/2023", "Tierra");
+		return response;
 	}
 }
